@@ -1,0 +1,17 @@
+= Knife Terremark
+This is the official Opscode Knife plugin for Terremark[http://www.terremark.com/].
+This plugin gives knife the ability to create, bootstrap, and manage servers in
+the Terremark cloud.
+
+== Installation
+This plugin is distributed as a Ruby Gem. To install it, run:
+  gem install knife-terremark
+Depending on your system configuration, you may need to run this command with
+root privileges.
+
+== Configuration
+TODO
+
+== Usage
+TODO
+
