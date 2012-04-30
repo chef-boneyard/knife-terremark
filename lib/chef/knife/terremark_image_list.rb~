@@ -1,6 +1,6 @@
 #
-# Author:: Adam Jacob (<adam@opscode.com>)
-# Copyright:: Copyright (c) 2009 Opscode, Inc.
+# Author:: Chirag Jog (chiragj@websym.com>)
+# Copyright:: Copyright (c) 2012 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,28 +20,19 @@ require 'fog'
 require 'highline'
 require 'chef/knife'
 require 'chef/json_compat'
+require 'tempfile'
 
 class Chef
   class Knife
-    class TerremarkServerDelete < Knife
+    class TerremarkImageList < Knife
 
-      banner "knife terremark server delete SERVER (options)"
-
-      def h
-        @highline ||= HighLine.new
-      end
-      
-      def msg_pair(label, value, color=:cyan)
-        if value && !value.to_s.empty?
-          puts "#{ui.color(label, color)}: #{value}"
-        end
-      end
+      banner "knife terremark image list (options)"
 
       option :terremark_password,
         :short => "-K PASSWORD",
         :long => "--terremark-password PASSWORD",
         :description => "Your terremark password",
-        :proc => Proc.new { |key| Chef::Config[:knife][:terremark_password] = key }
+        :proc => Proc.new { |key| Chef::Config[:knife][:terremark_password] = key } 
 
       option :terremark_username,
         :short => "-A USERNAME",
@@ -49,7 +40,14 @@ class Chef
         :description => "Your terremark username",
         :proc => Proc.new { |username| Chef::Config[:knife][:terremark_username] = username } 
 
+
+      def h
+        @highline ||= HighLine.new
+      end
+
       def run 
+        image_name = @name_args[0]
+
         terremark = Fog::Terremark::Vcloud.new(
           :terremark_vcloud_username => Chef::Config[:knife][:terremark_username],
           :terremark_vcloud_password => Chef::Config[:knife][:terremark_password]
@@ -57,25 +55,16 @@ class Chef
 
         $stdout.sync = true
 
-        @name_args.each do |vapp_id|
-          server = terremark.servers.get(vapp_id)
-          msg_pair("vApp ID", server.id)
-          msg_pair("vApp Name", server.name)
-          msg_pair("Public IP Address", server.PublicIpAddress)
-          msg_pair("Private IP Address", server.IpAddress)
-
-          puts "\n"
-          confirm("Do you really want to delete this server")
-
-          if server.PublicIpAddress
-              server.delete_internet_services
-              ui.warn("Released IP address #{server.PublicIpAddress}")  
-          end
-          server.destroy
-          ui.warn("Deleted server #{server.id}")
+        images_list = [ h.color('ID', :bold), h.color('Name', :bold) ]
+        terremark.images.all.each do |image|
+          image_list << image.id.to_s
+          image_list << image.name
         end
+        puts h.list(image_list, :columns_across, 2)
+
       end
     end
   end
 end
+
 
