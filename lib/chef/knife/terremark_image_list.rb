@@ -1,5 +1,5 @@
 #
-# Author:: Chirag Jog (chiragj@websym.com>)
+# Author:: Adam Jacob (<adam@opscode.com>)
 # Copyright:: Copyright (c) 2012 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #

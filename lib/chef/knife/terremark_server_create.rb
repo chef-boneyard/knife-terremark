@@ -59,14 +59,12 @@ class Chef
         :proc => lambda { |o| o.split(/[\s,]+/) },
         :default => []
 
-
       option :distro,
         :short => "-d DISTRO",
         :long => "--distro DISTRO",
         :description => "Bootstrap a distro using a template; default is 'ubuntu10.04-gems'",
         :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d },
         :default => "ubuntu10.04-gems"
-
 
       option :template_file,
         :long => "--template-file TEMPLATE",
@@ -79,7 +77,6 @@ class Chef
         :long => "--ssh-user USERNAME",
         :description => "The ssh username; default is 'vcloud'",
         :default => "vcloud"
-
 
       option :server_name,
         :short => "-N NAME",
@@ -98,7 +95,6 @@ class Chef
         :long => "--ssh-key KEY",
         :description => "Your terremark SSH Key id",
         :proc => Proc.new { |key_name| Chef::Config[:knife][:ssh_key_name] = key_name } 
-
         
       option :identity_file,
         :short => "-i IDENTITY_FILE",
@@ -128,6 +124,7 @@ class Chef
         key = key.to_sym
         Chef::Config[:knife][key] || config[key]
       end
+
       def tcp_test_ssh(hostname)
         tcp_socket = TCPSocket.new(hostname, 22)
         readable = IO.select([tcp_socket], nil, nil, 5)
@@ -153,6 +150,13 @@ class Chef
       end
 
       def run
+
+        $stdout.sync = true
+	unless Chef::Config[:knife][:image]
+          ui.error("You have not provided a valid image value")
+          exit 1
+        end
+
         server_name = Chef::Config[:knife][:server_name]
         vapp_template = Chef::Config[:knife][:image]
         key_name = Chef::Config[:knife][:ssh_key_name]
@@ -160,7 +164,6 @@ class Chef
           :terremark_vcloud_username => Chef::Config[:knife][:terremark_username],
           :terremark_vcloud_password => Chef::Config[:knife][:terremark_password]
         )
-        $stdout.sync = true
   
         keys = terremark.get_keys_list(terremark.default_organization_id).body["Keys"]
         ssh_key = keys.find{|item| item["Name"] == key_name}
@@ -182,29 +185,24 @@ class Chef
     
         # wait for it to be ready to do stuff
         server.wait_for { print "."; ready? }
-    
         puts("\n")
     
         #Power On the server
         server.power_on(server.id)
-    
         print "\n#{ui.color("Waiting for server to be Powered On", :magenta)}"
         server.wait_for { print "."; on? }
         
-        puts "\nCreate SSH Service"
+        print "\n#{ui.color("Creating Internet Service for SSH", :magenta)}"
         server.create_internet_service("TCP", "22")
         #Fetch Updated information
         server = terremark.servers.get(server.id)
     
         puts "#{ui.color("Public IP Address", :cyan)}: #{server.PublicIpAddress}"
         puts "#{ui.color("Private IP Address", :cyan)}: #{server.IpAddress}"
-        print "\n#{ui.color("Waiting for sshd", :magenta)}"
+        print "\n#{ui.color("Waiting for sshd.", :magenta)}"
     
         print(".") until tcp_test_ssh(server.PublicIpAddress) { sleep @initial_sleep_delay ||= 10; puts("done") }
-    
-    
         puts "\nBootstrapping #{h.color(server_name, :bold)}..."
-  
         bootstrap_for_node(server).run
       end
 
