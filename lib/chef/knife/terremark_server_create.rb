@@ -106,6 +106,20 @@ class Chef
         :description => "The SSH identity file used for authentication",
         :proc => Proc.new { |identity| Chef::Config[:knife][:identity_file] = identity } 
 
+      option :no_of_vcpus,
+        :short => "-v VCPUS",
+        :long => "--vcpus VCPUS",
+        :description => "Defines the number of virtual CPUs. Possible values are 1,2,4 or 8.",
+        :proc => Proc.new { |vcpus| Chef::Config[:knife][:no_of_vcpus] = vcpus },
+        :default => "1"
+
+      option :memory,
+        :short => "-m MEMORY",
+        :long => "--memory MEMORY",
+        :description => "Defines the number of MB of memory. This must be a multiple of 4 (256, 384, 512...16384).",
+        :proc => Proc.new { |memory| Chef::Config[:knife][:memory] = memory },
+        :default => "512"
+
       def h
         @highline ||= HighLine.new
       end
@@ -142,7 +156,6 @@ class Chef
         server_name = Chef::Config[:knife][:server_name]
         vapp_template = Chef::Config[:knife][:image]
         key_name = Chef::Config[:knife][:ssh_key_name]
-        puts "===> #{server_name}, #{vapp_template}, #{key_name}"
         terremark = Fog::Terremark::Vcloud.new(
           :terremark_vcloud_username => Chef::Config[:knife][:terremark_username],
           :terremark_vcloud_password => Chef::Config[:knife][:terremark_password]
@@ -156,9 +169,15 @@ class Chef
         end
         puts "Instantiating vApp #{h.color(server_name, :bold)}"
     
-        server_spec = {:name => server_name, :image => vapp_template, :sshkeyFingerPrint => ssh_key["FingerPrint"]}
+        server_spec = {
+            :name =>  Chef::Config[:knife][:server_name], 
+            :image => Chef::Config[:knife][:image], 
+            :sshkeyFingerPrint => ssh_key["FingerPrint"],
+            :vcpus => Chef::Config[:knife][:no_of_vcpus],
+            :memory => Chef::Config[:knife][:memory]
+        }
         server = terremark.servers.create(server_spec)
-        #print "Instantiated vApp named [#{h.color(server.name, :bold)}] as [#{h.color(server.id, :bold)}]"
+        print "Instantiated vApp named [#{h.color(server.name, :bold)}] as [#{h.color(server.id.to_s, :bold)}]"
         print "\n#{ui.color("Waiting for server to be Instantiated", :magenta)}"
     
         # wait for it to be ready to do stuff
