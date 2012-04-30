@@ -116,7 +116,7 @@ class Chef
       option :memory,
         :short => "-m MEMORY",
         :long => "--memory MEMORY",
-        :description => "Defines the number of MB of memory. This must be a multiple of 4 (256, 384, 512...16384).",
+        :description => "Defines the number of MB of memory. Possible values are 512,1024,1536,2048,4096,8192,12288 or 16384.",
         :proc => Proc.new { |memory| Chef::Config[:knife][:memory] = memory },
         :default => "512"
 
