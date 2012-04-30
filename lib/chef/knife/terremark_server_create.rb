@@ -88,7 +88,7 @@ class Chef
         :short => "-I IMAGE",
         :long => "--terremark-image IMAGE",
         :description => "Your terremark virtual app template/image name",
-        :proc => Proc.new { |template| Chef::Config[:knife][:image] = template } 
+        :proc => Proc.new { |template| Chef::Config[:knife][:image] = template }
 
       option :ssh_key_name,
         :short => "-S KEY",
@@ -152,11 +152,20 @@ class Chef
       def run
 
         $stdout.sync = true
-	unless Chef::Config[:knife][:image]
-          ui.error("You have not provided a valid image value")
+	unless Chef::Config[:knife][:server_name]
+          ui.error("Server Name cannot be empty")
           exit 1
         end
 
+	unless Chef::Config[:knife][:ssh_key_name]
+          ui.error("SSH Key Name cannot be empty")
+          exit 1
+        end
+
+	unless Chef::Config[:knife][:terremark_username] && Chef::Config[:knife][:terremark_password]
+	  ui.error("Missing Credentials")
+	  exit 1
+	end
         server_name = Chef::Config[:knife][:server_name]
         vapp_template = Chef::Config[:knife][:image]
         key_name = Chef::Config[:knife][:ssh_key_name]
@@ -200,7 +209,7 @@ class Chef
         puts "#{ui.color("Public IP Address", :cyan)}: #{server.PublicIpAddress}"
         puts "#{ui.color("Private IP Address", :cyan)}: #{server.IpAddress}"
         print "\n#{ui.color("Waiting for sshd.", :magenta)}"
-    
+        puts("\n")
         print(".") until tcp_test_ssh(server.PublicIpAddress) { sleep @initial_sleep_delay ||= 10; puts("done") }
         puts "\nBootstrapping #{h.color(server_name, :bold)}..."
         bootstrap_for_node(server).run

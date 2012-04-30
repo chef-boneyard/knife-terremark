@@ -45,7 +45,10 @@ class Chef
       end
 
       def run 
-        server_name = @name_args[0]
+	unless Chef::Config[:knife][:terremark_username] && Chef::Config[:knife][:terremark_password]
+	  ui.error("Missing Credentials")
+	  exit 1
+	end
 
         terremark = Fog::Terremark::Vcloud.new(
           :terremark_vcloud_username => Chef::Config[:knife][:terremark_username],

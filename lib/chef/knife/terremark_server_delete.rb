@@ -50,12 +50,18 @@ class Chef
         :proc => Proc.new { |username| Chef::Config[:knife][:terremark_username] = username } 
 
       def run 
+        $stdout.sync = true
+
+	unless Chef::Config[:knife][:terremark_username] && Chef::Config[:knife][:terremark_password]
+	  ui.error("Missing Credentials")
+	  exit 1
+	end
+
         terremark = Fog::Terremark::Vcloud.new(
           :terremark_vcloud_username => Chef::Config[:knife][:terremark_username],
           :terremark_vcloud_password => Chef::Config[:knife][:terremark_password]
         )
 
-        $stdout.sync = true
 
         @name_args.each do |vapp_id|
           server = terremark.servers.get(vapp_id)
