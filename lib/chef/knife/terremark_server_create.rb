@@ -72,6 +72,26 @@ class Chef
         :proc => Proc.new { |t| Chef::Config[:knife][:template_file] = t },
         :default => false
 
+      option :chef_node_name,
+        :short => "-N NAME",
+        :long => "--node-name NAME",
+        :description => "The Chef node name for your new node",
+        :proc => Proc.new { |t| Chef::Config[:knife][:chef_node_name] = t }
+
+      option :tcp_ports,
+        :short => "-T X,Y,Z",
+        :long => "--tcp X,Y,Z",
+        :description => "TCP ports to be made accessible for this server",
+        :proc => Proc.new { |tcp| tcp.split(',') },
+        :default => []
+
+      option :udp_ports,
+        :short => "-U X,Y,Z",
+        :long => "--udp X,Y,Z",
+        :description => "UDP ports to be made accessible for this server",
+        :proc => Proc.new { |udp| udp.split(',') },
+        :default => []
+
       option :ssh_user,
         :short => "-x USERNAME",
         :long => "--ssh-user USERNAME",
@@ -116,6 +136,14 @@ class Chef
         :proc => Proc.new { |memory| Chef::Config[:knife][:memory] = memory },
         :default => "512"
 
+      option :disks,
+        :short => "-D D1,D2,D3",
+        :long => "--disks D1,D2,D3",
+        :description => "Define Disks with sizes(GBs). eg. --disks 25,50 ... 500(max 15 disks)",
+        :proc => Proc.new { |disks| disks.split(',') },
+        :default => []
+
+
       def h
         @highline ||= HighLine.new
       end
@@ -125,8 +153,8 @@ class Chef
         Chef::Config[:knife][key] || config[key]
       end
 
-      def tcp_test_ssh(hostname)
-        tcp_socket = TCPSocket.new(hostname, 22)
+      def tcp_test_ssh(hostname, port)
+        tcp_socket = TCPSocket.new(hostname, port)
         readable = IO.select([tcp_socket], nil, nil, 5)
         if readable
           Chef::Log.debug("sshd accepting connections on #{hostname}, banner is #{tcp_socket.gets}")
@@ -195,14 +223,30 @@ class Chef
         # wait for it to be ready to do stuff
         server.wait_for { print "."; ready? }
         puts("\n")
-    
+
+        #Configure Additional Disks
+        disks = config[:disks]
+        if disks.size > 0
+          hardware = server.VirtualHardware
+          server_spec = { "vcpus" => hardware["cpu"], "memory" => hardware["ram"], "virtual_disks" => disks }
+          terremark.configure_vapp(server.id, server.name, server_spec)
+        print "\n#{ui.color("Waiting for additional disks to be configured", :magenta)}"
+          server.wait_for { print "."; ready? }
+          sleep(10) # Sleep additionally, to ensure Terremark APIs are in sync
+        end
+
         #Power On the server
         server.power_on(server.id)
         print "\n#{ui.color("Waiting for server to be Powered On", :magenta)}"
         server.wait_for { print "."; on? }
         
-        print "\n#{ui.color("Creating Internet Service for SSH", :magenta)}"
-        server.create_internet_service("TCP", "22")
+        print "\n#{ui.color("Creating Internet and Node Services for SSH and other services", :magenta)}"
+        tcp_ports = config[:tcp_ports] + [22] # Ensure we always open the SSH Port
+        udp_ports = config[:udp_ports]
+
+        services_spec = {"TCP" => tcp_ports.uniq, "UDP" => udp_ports.uniq}
+        server.create_internet_services(services_spec)
+
         #Fetch Updated information
         server = terremark.servers.get(server.id)
     
@@ -210,7 +254,7 @@ class Chef
         puts "#{ui.color("Private IP Address", :cyan)}: #{server.IpAddress}"
         print "\n#{ui.color("Waiting for sshd.", :magenta)}"
         puts("\n")
-        print(".") until tcp_test_ssh(server.PublicIpAddress) { sleep @initial_sleep_delay ||= 10; puts("done") }
+        print(".") until tcp_test_ssh(server.PublicIpAddress, "22") { sleep @initial_sleep_delay ||= 10; puts("done") }
         puts "\nBootstrapping #{h.color(server_name, :bold)}..."
         bootstrap_for_node(server).run
       end
@@ -221,7 +265,7 @@ class Chef
         bootstrap.config[:run_list] = config[:run_list]
         bootstrap.config[:ssh_user] = config[:ssh_user] || "root"
         bootstrap.config[:identity_file] = config[:identity_file]
-        bootstrap.config[:chef_node_name] = server.id
+        bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || server.id
         bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
         bootstrap.config[:use_sudo] = true unless config[:ssh_user] == 'root'
