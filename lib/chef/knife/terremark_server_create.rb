@@ -214,7 +214,8 @@ class Chef
             :image => Chef::Config[:knife][:image], 
             :sshkeyFingerPrint => ssh_key["FingerPrint"],
             :vcpus => Chef::Config[:knife][:no_of_vcpus],
-            :memory => Chef::Config[:knife][:memory]
+            :memory => Chef::Config[:knife][:memory],
+            :powerOn => false
         }
         server = terremark.servers.create(server_spec)
         print "Instantiated vApp named [#{h.color(server.name, :bold)}] as [#{h.color(server.id.to_s, :bold)}]"
@@ -247,9 +248,6 @@ class Chef
         services_spec = {"TCP" => tcp_ports.uniq, "UDP" => udp_ports.uniq}
         server.create_internet_services(services_spec)
 
-        #Fetch Updated information
-        server = terremark.servers.get(server.id)
-    
         puts "#{ui.color("Public IP Address", :cyan)}: #{server.PublicIpAddress}"
         puts "#{ui.color("Private IP Address", :cyan)}: #{server.IpAddress}"
         print "\n#{ui.color("Waiting for sshd.", :magenta)}"
