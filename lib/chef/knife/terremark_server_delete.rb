@@ -30,55 +30,56 @@ class Chef
       def h
         @highline ||= HighLine.new
       end
+      
+      def msg_pair(label, value, color=:cyan)
+        if value && !value.to_s.empty?
+          puts "#{ui.color(label, color)}: #{value}"
+        end
+      end
+
+      option :terremark_password,
+        :short => "-K PASSWORD",
+        :long => "--terremark-password PASSWORD",
+        :description => "Your terremark password",
+        :proc => Proc.new { |key| Chef::Config[:knife][:terremark_password] = key }
+
+      option :terremark_username,
+        :short => "-A USERNAME",
+        :long => "--terremark-username USERNAME",
+        :description => "Your terremark username",
+        :proc => Proc.new { |username| Chef::Config[:knife][:terremark_username] = username } 
 
       def run 
-        terremark = Fog::Terremark.new(
-          :terremark_username => Chef::Config[:knife][:terremark_username],
-          :terremark_password => Chef::Config[:knife][:terremark_password],
-          :terremark_service  => Chef::Config[:knife][:terremark_service] || :vcloud
-        )
-
         $stdout.sync = true
 
-        vapp_id = terremark.servers.detect {|server| server.name == @name_args[0]}.id
-        confirm("Do you really want to delete server ID #{vapp_id} named #{@name_args[0]}")
+	unless Chef::Config[:knife][:terremark_username] && Chef::Config[:knife][:terremark_password]
+	  ui.error("Missing Credentials")
+	  exit 1
+	end
 
-        puts "Cleaning up internet services..."
-        private_ip = terremark.servers.get(vapp_id).ip_address
-        internet_services = terremark.get_internet_services(terremark.default_vdc_id).body['InternetServices']
-        public_ip_usage = {}
-        internet_services.each do |internet_service|
-          public_ip_address = internet_service['PublicIpAddress']['Name']
-          public_ip_usage[public_ip_address] ||= []
-          public_ip_usage[public_ip_address] << internet_service['Id']
-        end
-        internet_services.each do |internet_service|
-          node_services = terremark.get_node_services(internet_service['Id']).body['NodeServices']
-          node_services.delete_if do |node_service|
-            if node_service['IpAddress'] == private_ip
-              terremark.delete_node_service(node_service['Id'])
-            end
+        terremark = Fog::Terremark::Vcloud.new(
+          :terremark_vcloud_username => Chef::Config[:knife][:terremark_username],
+          :terremark_vcloud_password => Chef::Config[:knife][:terremark_password]
+        )
+
+
+        @name_args.each do |vapp_id|
+          server = terremark.servers.get(vapp_id)
+          msg_pair("vApp ID", server.id)
+          msg_pair("vApp Name", server.name)
+          msg_pair("Public IP Address", server.PublicIpAddress)
+          msg_pair("Private IP Address", server.IpAddress)
+
+          puts "\n"
+          confirm("Do you really want to delete this server")
+
+          if server.PublicIpAddress
+              server.delete_internet_services
+              ui.warn("Released IP address #{server.PublicIpAddress}")  
           end
-          if node_services.empty?
-            terremark.delete_internet_service(internet_service['Id'])
-            public_ip_usage.each_value {|internet_services| internet_services.delete(internet_service['Id'])}
-            if public_ip_usage[internet_service['PublicIpAddress']['Name']].empty?
-              terremark.delete_public_ip(internet_service['PublicIpAddress']['Id'])
-            end
-          end
+          server.destroy
+          ui.warn("Deleted server #{server.id}")
         end
-
-        power_off_task_id = terremark.power_off(vapp_id).body['href'].split('/').last
-        print "Waiting for power off task [#{h.color(power_off_task_id, :bold)}]"
-        terremark.tasks.get(power_off_task_id).wait_for { print '.'; ready? }
-        print "\n"
-
-        print "Deleting vApp #{h.color(vapp_id, :bold)}"
-        delete_vapp_task_id = terremark.delete_vapp(vapp_id).headers['Location'].split('/').last
-        terremark.tasks.get(delete_vapp_task_id).wait_for { print '.'; ready? }
-        print "\n"
-        
-        Chef::Log.warn("Deleted server #{@name_args[0]}")
       end
     end
   end
