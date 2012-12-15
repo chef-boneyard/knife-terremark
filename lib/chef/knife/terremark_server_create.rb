@@ -1,14 +1,15 @@
 #
 # Author:: Adam Jacob (<adam@opscode.com>)
-# Copyright:: Copyright (c) 2009 Opscode, Inc.
+# Author:: Chirag Jog (<chirag@clogeny.com>)
+# Copyright:: Copyright (c) 2009-2012 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +50,7 @@ class Chef
         :short => "-A USERNAME",
         :long => "--terremark-username USERNAME",
         :description => "Your terremark username",
-        :proc => Proc.new { |username| Chef::Config[:knife][:terremark_username] = username } 
+        :proc => Proc.new { |username| Chef::Config[:knife][:terremark_username] = username }
 
 
       option :run_list,
@@ -102,7 +103,7 @@ class Chef
         :short => "-N NAME",
         :long => "--server-name NAME",
         :description => "The server name",
-        :proc => Proc.new { |server_name| Chef::Config[:knife][:server_name] = server_name } 
+        :proc => Proc.new { |server_name| Chef::Config[:knife][:server_name] = server_name }
 
       option :image,
         :short => "-I IMAGE",
@@ -114,13 +115,13 @@ class Chef
         :short => "-S KEY",
         :long => "--ssh-key KEY",
         :description => "Your terremark SSH Key id",
-        :proc => Proc.new { |key_name| Chef::Config[:knife][:ssh_key_name] = key_name } 
-        
+        :proc => Proc.new { |key_name| Chef::Config[:knife][:ssh_key_name] = key_name }
+
       option :identity_file,
         :short => "-i IDENTITY_FILE",
         :long => "--identity-file IDENTITY_FILE",
         :description => "The SSH identity file used for authentication",
-        :proc => Proc.new { |identity| Chef::Config[:knife][:identity_file] = identity } 
+        :proc => Proc.new { |identity| Chef::Config[:knife][:identity_file] = identity }
 
       option :no_of_vcpus,
         :short => "-v VCPUS",
@@ -147,7 +148,7 @@ class Chef
       def h
         @highline ||= HighLine.new
       end
-      
+
       def locate_config_value(key)
         key = key.to_sym
         Chef::Config[:knife][key] || config[key]
@@ -201,17 +202,17 @@ class Chef
           :terremark_vcloud_username => Chef::Config[:knife][:terremark_username],
           :terremark_vcloud_password => Chef::Config[:knife][:terremark_password]
         )
-  
+
         keys = terremark.get_keys_list(terremark.default_organization_id).body["Keys"]
         ssh_key = keys.find{|item| item["Name"] == key_name}
         if not ssh_key
             raise ArgumentError.new("SSH Key Name #{key_name} does not exist")
         end
         puts "Instantiating vApp #{h.color(server_name, :bold)}"
-    
+
         server_spec = {
-            :name =>  Chef::Config[:knife][:server_name], 
-            :image => Chef::Config[:knife][:image], 
+            :name =>  Chef::Config[:knife][:server_name],
+            :image => Chef::Config[:knife][:image],
             :sshkeyFingerPrint => ssh_key["FingerPrint"],
             :vcpus => Chef::Config[:knife][:no_of_vcpus],
             :memory => Chef::Config[:knife][:memory],
@@ -220,7 +221,7 @@ class Chef
         server = terremark.servers.create(server_spec)
         print "Instantiated vApp named [#{h.color(server.name, :bold)}] as [#{h.color(server.id.to_s, :bold)}]"
         print "\n#{ui.color("Waiting for server to be Instantiated", :magenta)}"
-    
+
         # wait for it to be ready to do stuff
         server.wait_for { print "."; ready? }
         puts("\n")
@@ -240,7 +241,7 @@ class Chef
         server.power_on(server.id)
         print "\n#{ui.color("Waiting for server to be Powered On", :magenta)}"
         server.wait_for { print "."; on? }
-        
+
         print "\n#{ui.color("Creating Internet and Node Services for SSH and other services", :magenta)}"
         tcp_ports = config[:tcp_ports] + [22] # Ensure we always open the SSH Port
         udp_ports = config[:udp_ports]

@@ -1,14 +1,15 @@
 #
 # Author:: Adam Jacob (<adam@opscode.com>)
-# Copyright:: Copyright (c) 2009 Opscode, Inc.
+# Author:: Chirag Jog (<chirag@clogeny.com>)
+# Copyright:: Copyright (c) 2009-2012 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +31,7 @@ class Chef
       def h
         @highline ||= HighLine.new
       end
-      
+
       def msg_pair(label, value, color=:cyan)
         if value && !value.to_s.empty?
           puts "#{ui.color(label, color)}: #{value}"
@@ -47,9 +48,9 @@ class Chef
         :short => "-A USERNAME",
         :long => "--terremark-username USERNAME",
         :description => "Your terremark username",
-        :proc => Proc.new { |username| Chef::Config[:knife][:terremark_username] = username } 
+        :proc => Proc.new { |username| Chef::Config[:knife][:terremark_username] = username }
 
-      def run 
+      def run
         $stdout.sync = true
 
 	unless Chef::Config[:knife][:terremark_username] && Chef::Config[:knife][:terremark_password]
@@ -75,7 +76,7 @@ class Chef
 
           if server.PublicIpAddress
               server.delete_internet_services
-              ui.warn("Released IP address #{server.PublicIpAddress}")  
+              ui.warn("Released IP address #{server.PublicIpAddress}")
           end
           server.destroy
           ui.warn("Deleted server #{server.id}")

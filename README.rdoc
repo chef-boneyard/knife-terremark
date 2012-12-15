@@ -72,6 +72,7 @@ Outputs a list of all available images available to the currently configured Ter
 
 Author:: Adam Jacob (<adam@opscode.com>)
 Author:: Seth Chisamore (<schisamo@opscode.com>)
+Author:: Chirag Jog (<chirag@clogeny.com>)
 Copyright:: Copyright (c) 2009-2012 Opscode, Inc.
 License:: Apache License, Version 2.0
 
