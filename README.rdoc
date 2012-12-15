@@ -10,14 +10,6 @@ Be sure you are running the latest version Chef. Versions earlier than 0.10.0 do
 
     gem install chef
 
-This plugin depends on a forked version of fog[http://github.com/chirag-jog/fog]. Download and Install It.
-
-    wget https://github.com/chirag-jog/fog/zipball/master
-    unzip master
-    cd *fog*
-    gem build fog.spec
-    gem install fog-<version>.gem 
-
 This plugin is distributed as a Ruby Gem. To install it, run:
 
     gem install knife-terremark
