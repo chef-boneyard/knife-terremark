@@ -19,14 +19,14 @@
 #
 
 require 'rubygems'
-require 'rake/gempackagetask'
-require 'rake/rdoctask'
+require 'rubygems/package_task'
+require 'rdoc/task'
 
 GEM_NAME = "knife-terremark"
 
 spec = eval(File.read("knife-terremark.gemspec"))
 
-Rake::GemPackageTask.new(spec) do |pkg|
+Gem::PackageTask.new(spec) do |pkg|
   pkg.gem_spec = spec
 end
 
