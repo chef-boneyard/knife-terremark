@@ -78,6 +78,7 @@ class Chef
               server.delete_internet_services
               ui.warn("Released IP address #{server.PublicIpAddress}")
           end
+          server.wait_for { ready? }
           server.destroy
           ui.warn("Deleted server #{server.id}")
         end
