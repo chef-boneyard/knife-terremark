@@ -1,7 +1,8 @@
 #
 # Author:: Adam Jacob (<adam@opscode.com>)
 # Author:: Daniel DeLeo (<dan@opscode.com>)
-# Copyright:: Copyright (c) 2008, 2010 Opscode, Inc.
+# Author:: Chirag Jog (<chirag@clogeny.com>)
+# Copyright:: Copyright (c) 2009-2012 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +19,14 @@
 #
 
 require 'rubygems'
-require 'rake/gempackagetask'
-require 'rake/rdoctask'
+require 'rubygems/package_task'
+require 'rdoc/task'
 
 GEM_NAME = "knife-terremark"
 
 spec = eval(File.read("knife-terremark.gemspec"))
 
-Rake::GemPackageTask.new(spec) do |pkg|
+Gem::PackageTask.new(spec) do |pkg|
   pkg.gem_spec = spec
 end
 
