@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.description = s.summary
   s.author = "Adam Jacob"
   s.email = "adam@opscode.com"
-  s.homepage = "http://wiki.opscode.com/display/chef"
+  s.homepage = "hhttps://github.com/chef/knife-terremark"
 
   s.add_dependency "chef", ">= 0.9.14"
   s.add_dependency "fog", ">= 1.6.0"
