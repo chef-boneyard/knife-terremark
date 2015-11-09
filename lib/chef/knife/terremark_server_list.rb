@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require 'fog'
+require 'fog/terremark'
 require 'highline'
 require 'chef/knife'
 require 'chef/json_compat'

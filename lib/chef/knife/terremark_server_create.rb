@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require 'fog'
+require 'fog/terremark'
 require 'highline'
 require 'net/ssh/multi'
 require 'readline'
