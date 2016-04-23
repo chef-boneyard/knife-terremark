@@ -14,6 +14,7 @@ spec/reports
 .config
 InstalledFiles
 .bundle
+Gemfile.lock
 
 # YARD artifacts
 .yardoc
@@ -32,3 +33,4 @@ Icon?
 
 *.swp
 *.swo
+
