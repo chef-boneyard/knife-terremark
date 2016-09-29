@@ -1,3 +1,7 @@
+# DEPRECATED
+
+The Terramark cloud has been deprecated so this knife plugin has also been deprecated
+
 # Knife Terremark
 [![Gem Version](https://badge.fury.io/rb/knife-terremark.svg)](https://rubygems.org/gems/knife-terremark) [![Build Status](https://travis-ci.org/chef/knife-terremark.svg?branch=master)](https://travis-ci.org/chef/knife-terremark) [![Dependency Status](https://gemnasium.com/chef/knife-terremark.svg)](https://gemnasium.com/chef/knife-terremark)
 
